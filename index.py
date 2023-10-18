@@ -2,10 +2,52 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 import os
+from docx import Document
+import PyPDF2
+from pptx import Presentation
+from openpyxl import load_workbook
+
+
+def search_keyword_in_ppt_file(file_path, keyword):
+    presentation = Presentation(file_path)
+    for slide in presentation.slides:
+        for shape in slide.shapes:
+            if hasattr(shape, 'text'):
+                if keyword in shape.text:
+                    return True
+    return False
+
+
+def search_keyword_in_excel_file(file_path, keyword):
+    wb = load_workbook(filename=file_path)
+    for sheet_name in wb.sheetnames:
+        sheet = wb[sheet_name]
+        for row in sheet.iter_rows():
+            for cell in row:
+                if cell.value and keyword in str(cell.value):
+                    return True
+    return False
+
+
+def search_keyword_in_pdf_file(file_path, keyword):
+    with open(file_path, 'rb') as f:
+        pdf_reader = PyPDF2.PdfReader(f)
+        for page in pdf_reader.pages:
+            if keyword.lower() in page.extract_text().lower():
+                return True
+    return False
+
+
+def search_keyword_in_doc_file(file_path, keyword):
+    doc = Document(file_path)
+    for paragraph in doc.paragraphs:
+        if keyword in paragraph.text:
+            return True
+    return False
 
 
 def search_files(folder_path):
-    file_extensions = ['.doc', '.docx', '.pdf', '.ppt', '.xls', '.xlsx']
+    file_extensions = ['.docx', '.pdf', '.pptx', '.xlsx']
     results = []
     for root, dirs, files in os.walk(folder_path):
         for file in files:
@@ -21,6 +63,19 @@ def on_select_folder():
     folder_label.config(text=folder_path)
 
 
+def is_keyword_in_file(file_path, keyword):
+    if file_path.endswith('.docx') or file_path.endswith('.doc'):
+        return search_keyword_in_doc_file(file_path, keyword)
+    elif file_path.endswith('.pdf'):
+        return search_keyword_in_pdf_file(file_path, keyword)
+    # elif file_path.endswith('.xls') or file_path.endswith('.xlsx'):
+    #     return search_keyword_in_excel_file(file_path, keyword)
+    elif file_path.endswith('.ppt'):
+        return search_keyword_in_ppt_file(file_path, keyword)
+    else:
+        return False
+
+
 def on_submit():
     keyword = keyword_entry.get()
     folder = folder_label.cget("text")
@@ -29,11 +84,11 @@ def on_submit():
 
     # 调用函数搜索文件并打印路径
     files = search_files(folder)
-    print(files)
 
     output = ""
     for file in files:
-        output += file + "\n"
+        if is_keyword_in_file(file, keyword):
+            output += file + "\n"
 
     result_text.config(text=output)
 
