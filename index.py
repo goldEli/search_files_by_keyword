@@ -6,6 +6,8 @@ from docx import Document
 import PyPDF2
 from pptx import Presentation
 from openpyxl import load_workbook
+import win32com.client as win32
+import xlrd
 
 
 def search_keyword_in_ppt_file(file_path, keyword):
@@ -18,7 +20,33 @@ def search_keyword_in_ppt_file(file_path, keyword):
     return False
 
 
-def search_keyword_in_excel_file(file_path, keyword):
+def search_keyword_in_xls_file(file_path, keyword):
+    # 打开Excel文件
+    workbook = xlrd.open_workbook(file_path)
+
+    # 获取所有工作表的名称
+    sheet_names = workbook.sheet_names()
+
+    for sheet_name in sheet_names:
+        # 根据工作表名称选择工作表
+        sheet = workbook.sheet_by_name(sheet_name)
+
+        # 遍历单元格，检查关键词是否存在
+        for row in range(sheet.nrows):
+            for col in range(sheet.ncols):
+                cell_value = sheet.cell_value(row, col)
+                if keyword in str(cell_value):
+                    # print(
+                    #     f"关键词'{keyword}'存在于工作表'{sheet_name}'的单元格({row+1}, {col+1})")
+                    # 如果你只想判断关键词是否存在，可直接返回True，避免继续遍历
+                    return True
+
+    # 如果关键词不存在于任何单元格
+    # print(f"关键词'{keyword}'不存在于Excel文件中")
+    return False
+
+
+def search_keyword_in_xlsx_file(file_path, keyword):
     wb = load_workbook(filename=file_path)
     for sheet_name in wb.sheetnames:
         sheet = wb[sheet_name]
@@ -39,6 +67,25 @@ def search_keyword_in_pdf_file(file_path, keyword):
 
 
 def search_keyword_in_doc_file(file_path, keyword):
+    # 创建Word应用程序对象
+    word_app = win32.Dispatch("Word.Application")
+    # 打开Word文件
+    doc = word_app.Documents.Open(file_path)
+    # 将文档内容读取为纯文本
+    doc_text = doc.Content.Text
+    # 关闭Word文件
+    doc.Close()
+    # 退出Word应用程序
+    word_app.Quit()
+
+    # 检查关键词是否在文档内容中
+    if keyword in doc_text:
+        return True
+    else:
+        return False
+
+
+def search_keyword_in_docx_file(file_path, keyword):
     doc = Document(file_path)
     for paragraph in doc.paragraphs:
         if keyword in paragraph.text:
@@ -47,7 +94,7 @@ def search_keyword_in_doc_file(file_path, keyword):
 
 
 def search_files(folder_path):
-    file_extensions = ['.docx', '.pdf', '.pptx', '.xlsx']
+    file_extensions = ['.docx', '.doc', '.pdf', '.pptx', '.xlsx', '.xls']
     results = []
     for root, dirs, files in os.walk(folder_path):
         for file in files:
@@ -64,12 +111,16 @@ def on_select_folder():
 
 
 def is_keyword_in_file(file_path, keyword):
-    if file_path.endswith('.docx') or file_path.endswith('.doc'):
+    if file_path.endswith('.docx'):
+        return search_keyword_in_docx_file(file_path, keyword)
+    if file_path.endswith('.doc'):
         return search_keyword_in_doc_file(file_path, keyword)
     elif file_path.endswith('.pdf'):
         return search_keyword_in_pdf_file(file_path, keyword)
-    # elif file_path.endswith('.xls') or file_path.endswith('.xlsx'):
-    #     return search_keyword_in_excel_file(file_path, keyword)
+    elif file_path.endswith('.xls'):
+        return search_keyword_in_xls_file(file_path, keyword)
+    elif file_path.endswith('.xlsx'):
+        return search_keyword_in_xlsx_file(file_path, keyword)
     elif file_path.endswith('.ppt'):
         return search_keyword_in_ppt_file(file_path, keyword)
     else:
