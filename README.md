@@ -9,6 +9,5 @@ pyinstaller --noconsole --name search --icon=search.ico index.py
 - [x] .docx
 - [x] .pptx
 - [x] .xlsx
-- [ ] .doc
-- [ ] .ppt
-- [ ] .xls
+- [x] .doc
+- [x] .xls
