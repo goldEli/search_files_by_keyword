@@ -131,7 +131,7 @@ def on_submit():
     keyword = keyword_entry.get()
     folder = folder_label.cget("text")
     # result_text.config(text=f"关键字：{keyword}\n选择的文件夹：{folder}")
-    result_text.config(text=f"搜索中。。。")
+    loading_text.config(text=f"搜索中。。。")
 
     # 调用函数搜索文件并打印路径
     files = search_files(folder)
@@ -140,13 +140,13 @@ def on_submit():
     for file in files:
         if is_keyword_in_file(file, keyword):
             output += file + "\n"
-
     result_text.config(text=output)
+    loading_text.config(text=f"搜索结束")
 
 
 # 创建主窗口
 window = tk.Tk()
-window.title("应用")
+window.title("搜索文件中的关键词")
 
 # 创建样式
 style = ttk.Style()
@@ -169,9 +169,13 @@ folder_label.grid(row=1, column=1, padx=10, pady=10, sticky="w")
 submit_button = ttk.Button(window, text="搜索", command=on_submit)
 submit_button.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
 
+# loading
+loading_text = ttk.Label(window, text="")
+loading_text.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
+
 # 创建结果展示标签
 result_text = ttk.Label(window, text="")
-result_text.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
+result_text.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
 # result_text = tk.Text(window, width=40, height=10)
 # result_text.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
 # result_text.configure(state="disabled") # 禁止编辑
