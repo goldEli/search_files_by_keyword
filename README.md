@@ -1,6 +1,6 @@
 
 ```shell
-pyinstaller --noconsole --icon=search.ico index.py
+pyinstaller --noconsole --name search --icon=search.ico index.py
 ```
 
 ## 支持类型
