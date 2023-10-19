@@ -8,6 +8,7 @@ from pptx import Presentation
 from openpyxl import load_workbook
 import win32com.client as win32
 import xlrd
+import threading
 
 
 def search_keyword_in_ppt_file(file_path, keyword):
@@ -127,11 +128,15 @@ def is_keyword_in_file(file_path, keyword):
         return False
 
 
-def on_submit():
+def handle_note_text(text):
+    note_text.config(text=text)
+    # note_text.update()
+
+
+def on_search():
     keyword = keyword_entry.get()
     folder = folder_label.cget("text")
     # result_text.config(text=f"关键字：{keyword}\n选择的文件夹：{folder}")
-    loading_text.config(text=f"搜索中。。。")
 
     # 调用函数搜索文件并打印路径
     files = search_files(folder)
@@ -141,7 +146,24 @@ def on_submit():
         if is_keyword_in_file(file, keyword):
             output += file + "\n"
     result_text.config(text=output)
-    loading_text.config(text=f"搜索结束")
+    note_text.config(text=f"搜索结束")
+
+
+def on_submit():
+    # thread.start()
+    # thread.join()
+    keyword = keyword_entry.get()
+    folder = folder_label.cget("text")
+    if folder == "":
+        handle_note_text("请选择文件夹！")
+        return
+    if keyword == "":
+        handle_note_text("请输入关键字！")
+        return
+    note_text.config(text=f"搜索中。。。")
+    # note_text.update()
+    thread = threading.Thread(target=on_search)
+    thread.start()
 
 
 # 创建主窗口
@@ -170,8 +192,8 @@ submit_button = ttk.Button(window, text="搜索", command=on_submit)
 submit_button.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
 
 # loading
-loading_text = ttk.Label(window, text="")
-loading_text.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
+note_text = ttk.Label(window, text="")
+note_text.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
 
 # 创建结果展示标签
 result_text = ttk.Label(window, text="")
