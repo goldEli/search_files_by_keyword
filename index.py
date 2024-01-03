@@ -9,6 +9,7 @@ from openpyxl import load_workbook
 import win32com.client as win32
 import xlrd
 import threading
+import time
 
 
 def search_keyword_in_ppt_file(file_path, keyword):
@@ -133,27 +134,104 @@ def handle_note_text(text):
     # note_text.update()
 
 
+output = ""
+totalFilesCount = 0
+handelFilesCount = 0
+errorFilesCount = 0
+errorTextFilePath = ''
+
+
 def on_search():
     keyword = keyword_entry.get()
     folder = folder_label.cget("text")
     # result_text.config(text=f"关键字：{keyword}\n选择的文件夹：{folder}")
+    global output
+    global totalFilesCount
+    global handelFilesCount
+    global errorFilesCount
+    errorFilesCount = 0
+    handelFilesCount = 0
+    output = ""
 
     # 调用函数搜索文件并打印路径
     files = search_files(folder)
+    totalFilesCount = len(files)
+    note_text.config(text=f"开始搜索：共{totalFilesCount}个文件")
 
-    output = ""
+    thread_loading_text = threading.Thread(target=handle_loading_text)
+    thread_loading_text.start()
+
     for file in files:
+        thread = threading.Thread(target=on_search_file, args=(file, keyword))
+        thread.start()
+
+
+def on_search_file(file, keyword):
+    global output
+    global handelFilesCount
+    global errorFilesCount
+    try:
+
         if is_keyword_in_file(file, keyword):
             output += file + "\n"
-    result_text.config(text=output)
-    note_text.config(text=f"搜索结束")
+            print(file)
+        handelFilesCount += 1
+        result_text.config(text=output)
+    except:
+        errorFilesCount += 1
+        print(f"异常文件：{file}")
+        append_to_error_file(file)
+
+
+def handle_loading_text():
+    while (totalFilesCount > handelFilesCount + errorFilesCount):
+        time.sleep(0.1)
+        if errorFilesCount > 0:
+            note_text.config(
+                text=f"正在搜索：共{totalFilesCount}个文件，已搜索{handelFilesCount}个文件,{errorFilesCount}个异常文件")
+        else:
+            note_text.config(
+                text=f"正在搜索：共{totalFilesCount}个文件，已搜索{handelFilesCount}个文件")
+    if errorFilesCount > 0:
+        note_text.config(text=f"搜索结束：共搜索{totalFilesCount}个文件, {errorFilesCount}个文件无法识别，请到error.txt查看")
+    else:
+        note_text.config(text=f"搜索结束：共搜索{totalFilesCount}个文件")
+
+
+def create_error_file(file_name):
+    global errorTextFilePath
+    errorTextFilePath = file_name
+    # file_name = 'error.txt'
+    try:
+        # 检查文件是否存在，如果存在就删除
+        if os.path.exists(file_name):
+            os.remove(file_name)
+            print(f"{file_name} 已存在，已删除")
+
+        # 创建新文件
+        with open(file_name, 'w') as file:
+            file.write(time.localtime + "\n")
+        print(f"{file_name} 创建成功")
+    except Exception as e:
+        print(f"发生错误: {e}")
+
+
+def append_to_error_file(text):
+    try:
+        with open(errorTextFilePath, 'a') as file:  # 使用 'a' 模式打开文件，以追加模式写入文本
+            file.write('无法识别文件： ' + text + '\n')  # 将文本写入文件末尾，并添加换行符
+        print("文本成功添加到 error.txt 文件中")
+    except Exception as e:
+        print(f"发生错误: {e}")
 
 
 def on_submit():
     # thread.start()
     # thread.join()
+    print("开始搜索")
     keyword = keyword_entry.get()
     folder = folder_label.cget("text")
+    create_error_file(os.path.join(folder, "error.txt"))
     if folder == "":
         handle_note_text("请选择文件夹！")
         return
