@@ -137,6 +137,7 @@ def handle_note_text(text):
 output = ""
 totalFilesCount = 0
 handelFilesCount = 0
+successFilesCount = 0
 errorFilesCount = 0
 errorTextFilePath = ''
 
@@ -149,8 +150,10 @@ def on_search():
     global totalFilesCount
     global handelFilesCount
     global errorFilesCount
+    global successFilesCount
     errorFilesCount = 0
     handelFilesCount = 0
+    successFilesCount = 0
     output = ""
 
     # 调用函数搜索文件并打印路径
@@ -170,17 +173,22 @@ def on_search_file(file, keyword):
     global output
     global handelFilesCount
     global errorFilesCount
+    global successFilesCount
     try:
 
         if is_keyword_in_file(file, keyword):
             output += file + "\n"
+            successFilesCount += 1
             print(file)
         handelFilesCount += 1
         result_text.config(text=output)
-    except:
+    
+    except ZeroDivisionError as error:
         errorFilesCount += 1
-        print(f"异常文件：{file}")
+        print(error)
         append_to_error_file(file)
+        append_to_error_file(error)
+        append_to_error_file("========================\n\n\n")
 
 
 def handle_loading_text():
@@ -188,14 +196,15 @@ def handle_loading_text():
         time.sleep(0.1)
         if errorFilesCount > 0:
             note_text.config(
-                text=f"正在搜索：共{totalFilesCount}个文件，已搜索{handelFilesCount}个文件,{errorFilesCount}个异常文件")
+                text=f"正在搜索：共{totalFilesCount}个文件，已搜索{handelFilesCount}个文件,找到{successFilesCount}个文件,{errorFilesCount}个异常文件")
         else:
             note_text.config(
-                text=f"正在搜索：共{totalFilesCount}个文件，已搜索{handelFilesCount}个文件")
+                text=f"正在搜索：共{totalFilesCount}个文件，已搜索{handelFilesCount}个文件,找到{successFilesCount}个文件")
     if errorFilesCount > 0:
-        note_text.config(text=f"搜索结束：共搜索{totalFilesCount}个文件, {errorFilesCount}个文件无法识别，请到error.txt查看")
+        note_text.config(
+            text=f"搜索结束：共搜索{totalFilesCount}个文件, 找到{successFilesCount}个文件,{errorFilesCount}个文件无法识别，请到error.txt查看")
     else:
-        note_text.config(text=f"搜索结束：共搜索{totalFilesCount}个文件")
+        note_text.config(text=f"搜索结束：共搜索{totalFilesCount}个文件, 找到{successFilesCount}个文件")
 
 
 def create_error_file(file_name):
