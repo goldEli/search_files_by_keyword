@@ -181,8 +181,11 @@ def on_search_file(file, keyword):
             successFilesCount += 1
             print(file)
         handelFilesCount += 1
-        result_text.config(text=output)
-    
+        # result_text.config(text=output)
+        # 更新文本内容
+        result_text.delete(1.0, tk.END)  # 清空现有内容
+        result_text.insert(tk.END, output)
+
     except ZeroDivisionError as error:
         errorFilesCount += 1
         print(error)
@@ -204,7 +207,8 @@ def handle_loading_text():
         note_text.config(
             text=f"搜索结束：共搜索{totalFilesCount}个文件, 找到{successFilesCount}个文件,{errorFilesCount}个文件无法识别，请到error.txt查看")
     else:
-        note_text.config(text=f"搜索结束：共搜索{totalFilesCount}个文件, 找到{successFilesCount}个文件")
+        note_text.config(
+            text=f"搜索结束：共搜索{totalFilesCount}个文件, 找到{successFilesCount}个文件")
 
 
 def create_error_file(file_name):
@@ -256,6 +260,9 @@ def on_submit():
 # 创建主窗口
 window = tk.Tk()
 window.title("搜索文件中的关键词")
+window.geometry("600x520")  # 设置窗口大小
+window['padx'] = 10
+window['pady'] = 10
 
 # 创建样式
 style = ttk.Style()
@@ -276,15 +283,31 @@ folder_label.grid(row=1, column=1, padx=10, pady=10, sticky="w")
 
 # 创建确定按钮
 submit_button = ttk.Button(window, text="搜索", command=on_submit)
-submit_button.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
+submit_button.grid(row=2, column=1, columnspan=2, padx=10, pady=10)
 
 # loading
 note_text = ttk.Label(window, text="")
-note_text.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
+note_text.grid(row=3, column=1, columnspan=2, padx=10, pady=10)
 
-# 创建结果展示标签
-result_text = ttk.Label(window, text="")
-result_text.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
+# 创建展示结果的 Text 组件和滚动条
+result_text = tk.Text(window, wrap="word", height=20,
+                      width=50, padx=10, pady=10)
+result_text.grid(row=5, column=1)
+
+scrollbar = tk.Scrollbar(window, command=result_text.yview)
+scrollbar.grid(row=5, column=2, sticky="ns")
+result_text.config(yscrollcommand=scrollbar.set)
+
+# # 创建结果展示标签
+# result_text = tk.Text(window, wrap="word", height=10, width=40)
+# result_text.pack()
+
+# # 创建滚动条
+# scrollbar = tk.Scrollbar(root, command=result_text.yview)
+# scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+# result_text.config(yscrollcommand=scrollbar.set)
+# result_text = ttk.Label(window, text="")
+# result_text.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
 # result_text = tk.Text(window, width=40, height=10)
 # result_text.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
 # result_text.configure(state="disabled") # 禁止编辑
